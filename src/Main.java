@@ -9,11 +9,9 @@ public class Main {
 
     static Scanner sc = new Scanner(System.in);
 
-    public static void CheckBalance() {
+    public static double CheckBalance(int account_no) {
         try{
             Connection connection = DriverManager.getConnection(url, userName, password);
-            System.out.println("Enter the Account Number: ");
-            int account_no = sc.nextInt();
 
             String query = "SELECT balance FROM accounts WHERE account_no = ?";
             PreparedStatement preparedStatement = connection.prepareStatement(query);
@@ -21,15 +19,15 @@ public class Main {
 
             ResultSet resultSet = preparedStatement.executeQuery();
             if(resultSet.next()) {
-                double curr_balance = resultSet.getDouble("balance");
-                System.out.println("Current Balance: " + curr_balance);
+                return resultSet.getDouble("balance");
             }
         }catch (SQLException e) {
             System.out.println(e.getMessage());
         }
+        return 0;
     }
 
-    public static void DebitAmount() {
+    public static void DebitAmount(int account_no, double amount) {
         try {
             Connection connection = DriverManager.getConnection(url, userName, password);
             connection.setAutoCommit(false);
@@ -38,12 +36,6 @@ public class Main {
 
             PreparedStatement debitPreparedStatement = connection.prepareStatement(debitQuery);
 
-            System.out.print("Enter the Account Number from which you want to DEBIT the amount: ");
-            int account_no = sc.nextInt();
-
-            System.out.print("Enter the Amount: ");
-            double amount = sc.nextDouble();
-
             debitPreparedStatement.setDouble(1, amount);
             debitPreparedStatement.setInt(2, account_no);
 
@@ -51,6 +43,7 @@ public class Main {
                 debitPreparedStatement.executeUpdate();
                 connection.commit();
                 System.out.println("Amount Debited Successfully!!");
+                System.out.println("Current Balance: " + CheckBalance(account_no));
             } else {
                 connection.rollback();
                 System.out.println("Insufficient Balance!");
@@ -60,18 +53,12 @@ public class Main {
         }
     }
 
-    public static void CreditAmount() {
+    public static void CreditAmount(int account_no, double amount) {
         try{
             Connection connection = DriverManager.getConnection(url, userName, password);
             String creditQuery = "UPDATE accounts set balance = balance + ? WHERE account_no = ?";
 
             PreparedStatement creditPreparedStatement = connection.prepareStatement(creditQuery);
-
-            System.out.print("Enter the Account Number to which you want to CREDIT the amount: ");
-            int account_no = sc.nextInt();
-
-            System.out.print("Enter the Amount: ");
-            double amount = sc.nextDouble();
 
             creditPreparedStatement.setDouble(1, amount);
             creditPreparedStatement.setInt(2, account_no);
@@ -80,6 +67,7 @@ public class Main {
 
             if (rowsAffected > 0) {
                 System.out.println("Amount Credited Successfully!");
+                System.out.println("Current Balance: " + CheckBalance(account_no));
             }
 
         } catch (SQLException e) {
@@ -244,12 +232,27 @@ public class Main {
             System.out.print("Enter you Choice: ");
             choice = sc.nextInt();
 
+            int account_no; double amount;
             switch (choice) {
-                case 1: CheckBalance();
+                case 1:
+                        System.out.print("Enter the Account Number: ");
+                        account_no = sc.nextInt();
+                        double curr_balance = CheckBalance(account_no);
+                        System.out.println("Current Balance: " + curr_balance);
                         break;
-                case 2: DebitAmount();
+                case 2:
+                        System.out.print("Enter the Account Number from which you want to DEBIT the amount: ");
+                        account_no = sc.nextInt();
+                        System.out.print("Enter the Amount: ");
+                        amount = sc.nextDouble();
+                        DebitAmount(account_no, amount);
                         break;
-                case 3: CreditAmount();
+                case 3:
+                        System.out.print("Enter the Account Number to which you want to CREDIT the amount: ");
+                        account_no = sc.nextInt();
+                        System.out.print("Enter the Amount: ");
+                        amount = sc.nextDouble();
+                        CreditAmount(account_no, amount);
                         break;
                 case 4: TransferBalance();
                         break;
